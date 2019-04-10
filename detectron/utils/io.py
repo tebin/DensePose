@@ -42,12 +42,12 @@ def cache_url(url_or_file, cache_dir):
     #
     url = url_or_file
     #
-    Len_filename  = len( url.split('/')[-1] )
-    BASE_URL  =  url[0:-Len_filename-1]
+    Len_filename = len(url.split('/')[-1])
+    BASE_URL = url[0:-Len_filename - 1]
     #
     cache_file_path = url.replace(BASE_URL, cache_dir)
     if os.path.exists(cache_file_path):
-        #assert_cache_file_is_ok(url, cache_file_path)
+        # assert_cache_file_is_ok(url, cache_file_path)
         return cache_file_path
 
     cache_file_dir = os.path.dirname(cache_file_path)
@@ -56,7 +56,7 @@ def cache_url(url_or_file, cache_dir):
 
     logger.info('Downloading remote file {} to {}'.format(url, cache_file_path))
     download_url(url, cache_file_path)
-    #assert_cache_file_is_ok(url, cache_file_path)
+    # assert_cache_file_is_ok(url, cache_file_path)
     return cache_file_path
 
 
