@@ -1,9 +1,9 @@
 /**
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * All rights reserved.
+ *
+ * This source code is licensed under the license found in the
+ * LICENSE file in the root directory of this source tree.
  */
 
 #include "caffe2/core/context_gpu.h"
@@ -27,7 +27,7 @@ template <>
 bool ZeroEvenOp<float, CUDAContext>::RunOnDevice() {
   // Retrieve the input tensor.
   const auto& X = Input(0);
-  CAFFE_ENFORCE(X.ndim() == 1);
+  CAFFE_ENFORCE(X.dim() == 1);
 
   // Initialize the output tensor to a copy of the input tensor.
   auto* Y = Output(0);

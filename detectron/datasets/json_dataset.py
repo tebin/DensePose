@@ -18,7 +18,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-import cPickle as pickle
 import logging
 import numpy as np
 import os
@@ -35,6 +34,8 @@ from detectron.core.config import cfg
 from detectron.utils.timer import Timer
 import detectron.datasets.dataset_catalog as dataset_catalog
 import detectron.utils.boxes as box_utils
+from detectron.utils.io import load_object
+import detectron.utils.segms as segm_utils
 
 logger = logging.getLogger(__name__)
 
@@ -179,8 +180,8 @@ class JsonDataset(object):
         width = entry['width']
         height = entry['height']
         for obj in objs:
-            # crowd regions are RLE encoded and stored as dicts
-            if isinstance(obj['segmentation'], list):
+            # crowd regions are RLE encoded
+            if segm_utils.is_poly(obj['segmentation']):
                 # Valid polygons have >= 3 points, so require >= 6 coordinates
                 obj['segmentation'] = [
                     p for p in obj['segmentation'] if len(p) >= 6
@@ -296,9 +297,11 @@ class JsonDataset(object):
     ):
         """Add proposals from a proposals file to an roidb."""
         logger.info('Loading proposals from: {}'.format(proposal_file))
-        with open(proposal_file, 'r') as f:
-            proposals = pickle.load(f)
+        proposals = load_object(proposal_file)
+
         id_field = 'indexes' if 'indexes' in proposals else 'ids'  # compat fix
+
+        _remove_proposals_not_in_roidb(proposals, roidb, id_field)
         _sort_proposals(proposals, id_field)
         box_list = []
         for i, entry in enumerate(roidb):
@@ -498,3 +501,11 @@ def _sort_proposals(proposals, id_field):
     fields_to_sort = ['boxes', id_field, 'scores']
     for k in fields_to_sort:
         proposals[k] = [proposals[k][i] for i in order]
+
+
+def _remove_proposals_not_in_roidb(proposals, roidb, id_field):
+    # fix proposals so they don't contain entries for images not in the roidb
+    roidb_ids = set({entry["id"] for entry in roidb})
+    keep = [i for i, id in enumerate(proposals[id_field]) if id in roidb_ids]
+    for f in ['boxes', id_field, 'scores']:
+        proposals[f] = [proposals[f][i] for i in keep]

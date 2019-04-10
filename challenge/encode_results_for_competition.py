@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """encode_results.py: script to encode dense human pose estimation results
 in DensePose format into a packed representation using PNG compression.

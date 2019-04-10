@@ -11,7 +11,7 @@ This document is a modified version of the [`detectron/GETTING_STARTED.md`](http
 #### 1. Directory of Image Files
 To run inference on a an image (or a directory of image files), you can use the `infer_simple.py` tool. In this example, we're using an end-to-end trained DensePose-RCNN model with a ResNet-101-FPN backbone from the model zoo:
 ```
-python2 tools/infer_simple.py \
+python tools/infer_simple.py \
     --cfg configs/DensePose_ResNet101_FPN_s1x-e2e.yaml \
     --output-dir DensePoseData/infer_out/ \
     --image-ext jpg \
@@ -28,7 +28,7 @@ Make sure that you have downloaded the DensePose evaluation files as instructed 
 This example shows how to run an end-to-end trained DensePose-RCNN model from the model zoo using a single GPU for inference. As configured, this will run inference on all images in `coco_2014_minival` (which must be properly installed).
 
 ```
-python2 tools/test_net.py \
+python tools/test_net.py \
     --cfg configs/DensePose_ResNet101_FPN_s1x-e2e.yaml \
     TEST.WEIGHTS https://dl.fbaipublicfiles.com/densepose/DensePose_ResNet101_FPN_s1x-e2e.pkl \
     NUM_GPUS 1
@@ -39,7 +39,7 @@ python2 tools/test_net.py \
 This example shows how to train a model using the DensePose-COCO dataset. The model will be an end-to-end trained DensePose-RCNN using a ResNet-50-FPN backbone. 
 
 ```
-python2 tools/train_net.py \
+python tools/train_net.py \
     --cfg configs/DensePose_ResNet50_FPN_single_GPU.yaml \
     OUTPUT_DIR /tmp/detectron-output
 ```

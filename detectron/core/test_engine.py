@@ -18,7 +18,6 @@ import datetime
 import logging
 import numpy as np
 import os
-import yaml
 
 from caffe2.python import workspace
 
@@ -198,7 +197,7 @@ def multi_gpu_test_net_on_dataset(
             all_keyps[cls_idx] += all_keyps_batch[cls_idx]
             all_bodys[cls_idx] += all_bodys_batch[cls_idx]
     det_file = os.path.join(output_dir, 'detections.pkl')
-    cfg_yaml = yaml.dump(cfg)
+    cfg_yaml = envu.yaml_dump(cfg)
     save_object(
         dict(
             all_boxes=all_boxes,
@@ -238,34 +237,34 @@ def test_net(
     timers = defaultdict(Timer)
     for i, entry in enumerate(roidb):
         if 'has_no_densepose' in entry.keys():
-            pass
+            continue
+
+        if cfg.TEST.PRECOMPUTED_PROPOSALS:
+            # The roidb may contain ground-truth rois (for example, if the roidb
+            # comes from the training or val split). We only want to evaluate
+            # detection on the *non*-ground-truth rois. We select only the rois
+            # that have the gt_classes field set to 0, which means there's no
+            # ground truth.
+            box_proposals = entry['boxes'][entry['gt_classes'] == 0]
+            if len(box_proposals) == 0:
+                continue
         else:
-            if cfg.TEST.PRECOMPUTED_PROPOSALS:
-                # The roidb may contain ground-truth rois (for example, if the roidb
-                # comes from the training or val split). We only want to evaluate
-                # detection on the *non*-ground-truth rois. We select only the rois
-                # that have the gt_classes field set to 0, which means there's no
-                # ground truth.
-                box_proposals = entry['boxes'][entry['gt_classes'] == 0]
-                if len(box_proposals) == 0:
-                    continue
-            else:
-                # Faster R-CNN type models generate proposals on-the-fly with an
-                # in-network RPN; 1-stage models don't require proposals.
-                box_proposals = None
+            # Faster R-CNN type models generate proposals on-the-fly with an
+            # in-network RPN; 1-stage models don't require proposals.
+            box_proposals = None
 
-            im = cv2.imread(entry['image'])
-            with c2_utils.NamedCudaScope(gpu_id):
-                cls_boxes_i, cls_segms_i, cls_keyps_i,cls_bodys_i = \
-                    im_detect_all(model, im, box_proposals, timers)
+        im = cv2.imread(entry['image'])
+        with c2_utils.NamedCudaScope(gpu_id):
+            cls_boxes_i, cls_segms_i, cls_keyps_i,cls_bodys_i = \
+                im_detect_all(model, im, box_proposals, timers)
 
-            extend_results(i, all_boxes, cls_boxes_i)
-            if cls_segms_i is not None:
-                extend_results(i, all_segms, cls_segms_i)
-            if cls_keyps_i is not None:
-                extend_results(i, all_keyps, cls_keyps_i)
-            if cls_bodys_i is not None:
-                extend_results(i, all_bodys, cls_bodys_i)
+        extend_results(i, all_boxes, cls_boxes_i)
+        if cls_segms_i is not None:
+            extend_results(i, all_segms, cls_segms_i)
+        if cls_keyps_i is not None:
+            extend_results(i, all_keyps, cls_keyps_i)
+        if cls_bodys_i is not None:
+            extend_results(i, all_bodys, cls_bodys_i)
 
         if i % 10 == 0:  # Reduce log file size
             ave_total_time = np.sum([t.average_time for t in timers.values()])
@@ -308,7 +307,7 @@ def test_net(
                 show_class=True
             )
 
-    cfg_yaml = yaml.dump(cfg)
+    cfg_yaml = envu.yaml_dump(cfg)
     if ind_range is not None:
         det_name = 'detection_range_%s_%s.pkl' % tuple(ind_range)
     else:

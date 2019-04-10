@@ -27,7 +27,6 @@ import detectron.roi_data.body_uv_rcnn as body_uv_rcnn_roi_data
 import detectron.utils.blob as blob_utils
 import detectron.utils.boxes as box_utils
 
-
 logger = logging.getLogger(__name__)
 
 

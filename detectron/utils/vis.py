@@ -96,8 +96,8 @@ def vis_mask(img, mask, col, alpha=0.4, show_border=True, border_thick=1):
     img[idx[0], idx[1], :] += alpha * col
 
     if show_border:
-        _, contours, _ = cv2.findContours(
-            mask.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+        contours = cv2.findContours(
+            mask.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)[-2]
         cv2.drawContours(img, contours, -1, _WHITE, border_thick, cv2.LINE_AA)
 
     return img.astype(np.uint8)
@@ -105,6 +105,7 @@ def vis_mask(img, mask, col, alpha=0.4, show_border=True, border_thick=1):
 
 def vis_class(img, pos, class_str, font_scale=0.35):
     """Visualizes the class."""
+    img = img.astype(np.uint8)
     x0, y0 = int(pos[0]), int(pos[1])
     # Compute text size.
     txt = class_str
@@ -122,6 +123,7 @@ def vis_class(img, pos, class_str, font_scale=0.35):
 
 def vis_bbox(img, bbox, thick=1):
     """Visualizes a bounding box."""
+    img = img.astype(np.uint8)
     (x0, y0, w, h) = bbox
     x1, y1 = int(x0 + w), int(y0 + h)
     x0, y0 = int(x0), int(y0)
@@ -243,7 +245,7 @@ def vis_one_image_opencv(
 def vis_one_image(
         im, im_name, output_dir, boxes, segms=None, keypoints=None, body_uv=None, thresh=0.9,
         kp_thresh=2, dpi=200, box_alpha=0.0, dataset=None, show_class=False,
-        ext='pdf'):
+        ext='pdf', out_when_no_box=False):
     """Visual debugging of detections."""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -252,7 +254,7 @@ def vis_one_image(
         boxes, segms, keypoints, classes = convert_from_cls_format(
             boxes, segms, keypoints)
 
-    if boxes is None or boxes.shape[0] == 0 or max(boxes[:, 4]) < thresh:
+    if (boxes is None or boxes.shape[0] == 0 or max(boxes[:, 4]) < thresh) and not out_when_no_box:
         return
 
     dataset_keypoints, _ = keypoint_utils.get_keypoints()
@@ -273,9 +275,12 @@ def vis_one_image(
     fig.add_axes(ax)
     ax.imshow(im)
 
-    # Display in largest to smallest order to reduce occlusion
-    areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
-    sorted_inds = np.argsort(-areas)
+    if boxes is None:
+        sorted_inds = [] # avoid crash when 'boxes' is None
+    else:
+        # Display in largest to smallest order to reduce occlusion
+        areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+        sorted_inds = np.argsort(-areas)
 
     mask_color_id = 0
     for i in sorted_inds:
@@ -315,8 +320,8 @@ def vis_one_image(
                 img[:, :, c] = color_mask[c]
             e = masks[:, :, i]
 
-            _, contour, hier = cv2.findContours(
-                e.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+            contour = cv2.findContours(
+                e.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)[-2]
 
             for c in contour:
                 polygon = Polygon(

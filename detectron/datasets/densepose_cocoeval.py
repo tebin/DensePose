@@ -404,7 +404,7 @@ class denseposeCOCOeval:
                 else:
                     px[pts == -1] = 0; py[pts == -1] = 0;
                     ipoints = d['uv'][0, py, px]
-                    upoints = d['uv'][1, py, px] / 255. # convert from uint8 by /255.
+                    upoints = d['uv'][1, py, px] / 255. # convert from uint8 by / 255.
                     vpoints = d['uv'][2, py, px] / 255.
                     ipoints[pts == -1] = 0
                     # Find closest vertices index in subsampled mesh.
@@ -809,10 +809,10 @@ class denseposeCOCOeval:
                         dists.append(0)
                     elif i > j:
                         # find the offset to fetch the precomputed geodesic distance
-                        k = i * (i - 1) / 2 + j
+                        k = i * (i - 1) // 2 + j
                         dists.append(self.Pdist_matrix[k][0])
                     else:
-                        k = j * (j - 1) / 2 + i
+                        k = j * (j - 1) // 2 + i
                         dists.append(self.Pdist_matrix[k][0])
                 else:
                     dists.append(np.inf)

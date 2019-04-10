@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #
@@ -31,10 +33,6 @@ import detectron.utils.c2 as c2_utils
 
 c2_utils.import_detectron_ops()
 c2_utils.import_custom_ops()
-
-
-#utils.c2.import_custom_ops()
-#utils.c2.import_detectron_ops()
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
 # thread safe and causes unwanted GPU memory allocations.

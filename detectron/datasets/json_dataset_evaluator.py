@@ -16,8 +16,8 @@ import json
 import logging
 import numpy as np
 import os
+import six
 import uuid
-import pickle
 
 #from pycocotools.cocoeval import COCOeval
 from detectron.datasets.densepose_cocoeval import denseposeCOCOeval
@@ -25,6 +25,7 @@ from detectron.datasets.densepose_cocoeval import denseposeCOCOeval
 
 from detectron.core.config import cfg
 from detectron.utils.io import save_object
+from detectron.utils.io import load_object
 import detectron.utils.boxes as box_utils
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,10 @@ def evaluate_masks(
     if json_dataset.name.find('test') == -1:
         coco_eval = _do_segmentation_eval(json_dataset, res_file, output_dir)
     else:
+        logger.warning(
+            '{} eval ignored as annotations are undisclosed on test: {} ignored'
+            .format("Segmentation", json_dataset.name)
+        )
         coco_eval = None
     # Optionally cleanup results json file
     if cleanup:
@@ -77,6 +82,16 @@ def _write_coco_segms_results_file(
         'Writing segmentation results json to: {}'.format(
             os.path.abspath(res_file)))
     with open(res_file, 'w') as fid:
+        # "counts" is an array encoded by mask_util as a byte-stream. Python3's
+        # json writer which /always produces strings/ cannot serialize a bytestream
+        # unless you decode it. Thankfully, utf-8 works out (which is also what
+        # the pycocotools/_mask.pyx does.
+        if six.PY3:
+            for r in results:
+                rle = r['segmentation']
+                if 'counts' in rle:
+                    rle['counts'] = rle['counts'].decode("utf8")
+
         json.dump(results, fid)
 
 
@@ -132,6 +147,10 @@ def evaluate_boxes(
     if json_dataset.name.find('test') == -1:
         coco_eval = _do_detection_eval(json_dataset, res_file, output_dir)
     else:
+        logger.warning(
+            '{} eval ignored as annotations are undisclosed on test: {} ignored'
+            .format("Bbox", json_dataset.name)
+        )
         coco_eval = None
     # Optionally cleanup results json file
     if cleanup:
@@ -332,6 +351,10 @@ def evaluate_keypoints(
     if json_dataset.name.find('test') == -1:
         coco_eval = _do_keypoint_eval(json_dataset, res_file, output_dir)
     else:
+        logger.warning(
+            '{} eval ignored as annotations are undisclosed on test: {} ignored'
+            .format("Keypoints", json_dataset.name)
+        )
         coco_eval = None
     # Optionally cleanup results json file
     if cleanup:
@@ -446,6 +469,10 @@ def evaluate_body_uv(
     if json_dataset.name.find('test') == -1:
         coco_eval = _do_body_uv_eval(json_dataset, res_file, output_dir)
     else:
+        logger.warning(
+            '{} eval ignored as annotations are undisclosed on test: {} ignored'
+            .format("Body_UV", json_dataset.name)
+        )
         coco_eval = None
     # Optionally cleanup results json file
     if cleanup:
@@ -473,8 +500,7 @@ def _write_coco_body_uv_results_file(
     logger.info(
         'Writing body uv results pkl to: {}'.format(
             os.path.abspath(res_file)))
-    with open(res_file, 'wb') as f:
-        pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
+    save_object(results, res_file)
     # logger.info('Not writing body uv resuts json')
 
 
@@ -519,8 +545,7 @@ def _do_body_uv_eval(json_dataset, res_file, output_dir):
     ann_type = 'uv'
     imgIds = json_dataset.COCO.getImgIds()
     imgIds.sort()
-    with open(res_file, 'rb') as f:
-        res = pickle.load(f)
+    res = load_object(res_file)
     coco_dt = json_dataset.COCO.loadRes(res)
     # Non-standard params used by the modified COCO API version
     # from the DensePose fork
@@ -530,8 +555,8 @@ def _do_body_uv_eval(json_dataset, res_file, output_dir):
     coco_eval.params.imgIds = imgIds
     coco_eval.evaluate()
     coco_eval.accumulate()
-    # eval_file = os.path.join(output_dir, 'body_uv_results.pkl')
-    # save_object(coco_eval, eval_file)
-    # logger.info('Wrote json eval results to: {}'.format(eval_file))
+    eval_file = os.path.join(output_dir, 'body_uv_results.pkl')
+    save_object(coco_eval, eval_file)
+    logger.info('Wrote pickle eval results to: {}'.format(eval_file))
     coco_eval.summarize()
     return coco_eval

@@ -56,7 +56,7 @@ posetrack
 To demonstrate the evaluation, we use a DensePose-RCNN with a ResNet-50 trunk that is trained on the DensePose-COCO dataset.
 ```
 cd $DENSEPOSE
-python2 tools/test_net.py \
+python tools/test_net.py \
     --cfg PoseTrack/configs/DensePose_ResNet50_FPN_s1x-e2e.yaml \
     TEST.WEIGHTS https://dl.fbaipublicfiles.com/densepose/DensePose_ResNet50_FPN_s1x-e2e.pkl \
     NUM_GPUS 1

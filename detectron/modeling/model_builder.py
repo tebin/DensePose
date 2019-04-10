@@ -49,7 +49,6 @@ import detectron.modeling.rpn_heads as rpn_heads
 import detectron.roi_data.minibatch as roi_data_minibatch
 import detectron.utils.c2 as c2_utils
 
-
 logger = logging.getLogger(__name__)
 
 
